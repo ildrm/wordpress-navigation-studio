@@ -1,0 +1,12 @@
+includes:
+  - vendor/szepeviktor/phpstan-wordpress/extension.neon
+parameters:
+  level: 6
+  bootstrapFiles:
+    - tools/phpstan-bootstrap.php
+  paths:
+    - navigation-studio.php
+    - includes
+  treatPhpDocTypesAsCertain: false
+  ignoreErrors:
+    - '#generic class WP_REST_Request#'

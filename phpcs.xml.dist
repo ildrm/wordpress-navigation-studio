@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<ruleset name="Navigation Studio">
+	<description>WordPress coding standards for Navigation Studio.</description>
+	<file>navigation-studio.php</file>
+	<file>uninstall.php</file>
+	<file>includes</file>
+	<file>tests/php</file>
+	<exclude-pattern>vendor/*</exclude-pattern>
+	<arg name="extensions" value="php" />
+	<arg value="sp" />
+	<rule ref="WordPress">
+		<!-- PSR-4 class paths intentionally preserve class casing instead of Core's class-*.php convention. -->
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+		<!-- Focused services use native types; comments are reserved for non-obvious algorithms and contracts. -->
+		<exclude name="Squiz.Commenting.ClassComment.Missing" />
+		<exclude name="Squiz.Commenting.FunctionComment" />
+		<exclude name="Generic.Commenting.DocComment.MissingShort" />
+		<exclude name="Generic.Commenting.DocComment.ShortNotCapital" />
+		<exclude name="Squiz.Commenting.FunctionCommentThrowTag.Missing" />
+		<!-- Custom capabilities are installed during activation and cannot be inferred statically. -->
+		<exclude name="WordPress.WP.Capabilities.Unknown" />
+		<!-- The repositories intentionally query plugin-owned indexed tables. -->
+		<exclude name="WordPress.DB.DirectDatabaseQuery" />
+		<!-- These findings concern exception strings, not HTML output. -->
+		<exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped" />
+	</rule>
+	<rule ref="PHPCompatibilityWP">
+		<properties><property name="testVersion" value="7.4-" /></properties>
+	</rule>
+</ruleset>

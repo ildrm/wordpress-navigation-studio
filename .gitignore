@@ -1,0 +1,11 @@
+/node_modules/
+/vendor/
+/build/
+/dist/
+/artifacts/
+/coverage/
+/.wp-env/
+.phpunit.result.cache
+npm-debug.log*
+*.zip
+*.log

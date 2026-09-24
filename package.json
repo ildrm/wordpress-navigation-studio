@@ -1,0 +1,36 @@
+{
+	"name": "navigation-studio",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Visual navigation management for WordPress",
+	"scripts": {
+		"build": "wp-scripts build --output-path=build",
+		"start": "wp-scripts start --output-path=build",
+		"format": "wp-scripts format",
+		"lint:js": "wp-scripts lint-js",
+		"lint:css": "wp-scripts lint-style src/**/*.scss",
+		"test:unit": "wp-scripts test-unit-js --runInBand",
+		"test:e2e": "wp-scripts test-playwright",
+		"env:start": "wp-env start",
+		"env:test:start": "wp-env start --config .wp-env.tests.json",
+		"env:stop": "wp-env stop",
+		"packages-update": "wp-scripts packages-update"
+	},
+	"devDependencies": {
+		"@playwright/test": "latest",
+		"@wordpress/e2e-test-utils-playwright": "latest",
+		"@wordpress/env": "latest",
+		"@wordpress/jest-preset-default": "latest",
+		"@wordpress/scripts": "33.0.0",
+		"@types/jest": "30.0.0",
+		"typescript": "5.9.2"
+	},
+	"dependencies": {
+		"@wordpress/api-fetch": "wp-7.0",
+		"@wordpress/components": "wp-7.0",
+		"@wordpress/element": "wp-7.0",
+		"@wordpress/hooks": "wp-7.0",
+		"@wordpress/i18n": "wp-7.0",
+		"@wordpress/icons": "wp-7.0"
+	}
+}

@@ -1,0 +1,63 @@
+.navstudio-submenu-toggle {
+	background: transparent;
+	border: 0;
+	color: inherit;
+	cursor: pointer;
+	min-height: 32px;
+	min-width: 32px;
+	padding: 4px;
+}
+
+.navstudio-submenu-toggle:focus-visible {
+	outline: 2px solid currentcolor;
+	outline-offset: 2px;
+}
+
+[data-navstudio-badge]::after {
+	background: #d63638;
+	border-radius: 999px;
+	color: #fff;
+	content: attr(data-navstudio-badge);
+	font-size: 0.65em;
+	margin-inline-start: 0.4em;
+	padding: 0.15em 0.45em;
+	vertical-align: 0.2em;
+}
+
+@media (min-width: 783px) {
+
+	[data-navstudio-hidden~="desktop"] {
+		display: none !important;
+	}
+}
+
+@media (min-width: 601px) and (max-width: 782px) {
+
+	[data-navstudio-hidden~="tablet"] {
+		display: none !important;
+	}
+}
+
+@media (max-width: 600px) {
+
+	[data-navstudio-hidden~="mobile"] {
+		display: none !important;
+	}
+
+	.menu-item-has-children > .sub-menu {
+		display: none;
+	}
+
+	.menu-item-has-children.is-open > .sub-menu {
+		display: block;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.navstudio-submenu-toggle,
+	.navstudio-submenu {
+		scroll-behavior: auto;
+		transition: none !important;
+	}
+}

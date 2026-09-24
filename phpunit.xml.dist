@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<phpunit bootstrap="tests/php/bootstrap.php" colors="true" failOnWarning="true" failOnRisky="true">
+	<testsuites>
+		<testsuite name="Navigation Studio"><directory suffix="Test.php">tests/php</directory></testsuite>
+	</testsuites>
+</phpunit>
