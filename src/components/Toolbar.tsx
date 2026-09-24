@@ -5,6 +5,7 @@ import {
 	ToolbarButton,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { api } from '../api';
 import type { EditorState } from '../types';
 
 interface Props {
@@ -26,6 +27,25 @@ export function EditorToolbar( {
 	onPublish,
 	onPalette,
 }: Props ) {
+	const exportNavigation = async () => {
+		const data = await api.exportNavigation( state.navigation.key );
+		const blob = new Blob( [ JSON.stringify( data, null, 2 ) ], {
+			type: 'application/json',
+		} );
+		const url = URL.createObjectURL( blob );
+		const link = document.createElement( 'a' );
+		link.href = url;
+		link.download = `${
+			state.navigation.name
+				.toLocaleLowerCase()
+				.replace( /[^a-z0-9]+/g, '-' )
+				.replace( /(^-|-$)/g, '' ) || 'navigation'
+		}.json`;
+		document.body.append( link );
+		link.click();
+		link.remove();
+		window.setTimeout( () => URL.revokeObjectURL( url ), 0 );
+	};
 	return (
 		<header className="navstudio-toolbar">
 			<div className="navstudio-toolbar__identity">
@@ -83,10 +103,7 @@ export function EditorToolbar( {
 					controls={ [
 						{
 							title: __( 'Export JSON', 'navigation-studio' ),
-							onClick: () =>
-								window.open(
-									`${ window.navStudioSettings.apiRoot }menus/${ encodeURIComponent( state.navigation.key ) }/export?_wpnonce=${ encodeURIComponent( window.navStudioSettings.nonce ) }`
-								),
+							onClick: () => void exportNavigation(),
 						},
 					] }
 				/>

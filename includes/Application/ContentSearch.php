@@ -12,10 +12,12 @@ defined( 'ABSPATH' ) || exit;
 final class ContentSearch {
 	/** @return array<string,mixed> */
 	public function search( string $query, string $kind, int $page, int $per_page ): array {
-		$page     = max( 1, $page );
-		$per_page = min( 50, max( 1, $per_page ) );
-		$results  = array();
-		$total    = 0;
+		$page       = max( 1, $page );
+		$per_page   = min( 50, max( 1, $per_page ) );
+		$offset     = ( $page - 1 ) * $per_page;
+		$results    = array();
+		$post_total = 0;
+		$term_total = 0;
 
 		if ( 'all' === $kind || 'post' === $kind ) {
 			$post_types = get_post_types( array( 'show_in_nav_menus' => true ), 'names' );
@@ -25,7 +27,7 @@ final class ContentSearch {
 					'post_type'      => $post_types,
 					'post_status'    => array( 'publish', 'private', 'draft' ),
 					'posts_per_page' => $per_page,
-					'paged'          => $page,
+					'offset'         => $offset,
 					'orderby'        => 'relevance title',
 					'no_found_rows'  => false,
 				)
@@ -44,20 +46,34 @@ final class ContentSearch {
 					'context'    => $context,
 				);
 			}
-			$total += (int) $post_query->found_posts;
+			$post_total = (int) $post_query->found_posts;
 		}
 
 		if ( 'all' === $kind || 'taxonomy' === $kind ) {
-			$taxonomies = get_taxonomies( array( 'show_in_nav_menus' => true ), 'names' );
-			$terms      = get_terms(
+			$taxonomies  = get_taxonomies( array( 'show_in_nav_menus' => true ), 'names' );
+			$count       = wp_count_terms(
 				array(
 					'taxonomy'   => $taxonomies,
 					'search'     => $query,
 					'hide_empty' => false,
-					'number'     => $per_page,
-					'offset'     => ( $page - 1 ) * $per_page,
 				)
 			);
+			$term_total  = is_wp_error( $count ) ? 0 : (int) $count;
+			$remaining   = $per_page - count( $results );
+			$term_offset = 'all' === $kind ? max( 0, $offset - $post_total ) : $offset;
+			if ( $remaining > 0 ) {
+				$terms = get_terms(
+					array(
+						'taxonomy'   => $taxonomies,
+						'search'     => $query,
+						'hide_empty' => false,
+						'number'     => $remaining,
+						'offset'     => $term_offset,
+					)
+				);
+			} else {
+				$terms = array();
+			}
 			if ( ! is_wp_error( $terms ) ) {
 				foreach ( $terms as $term ) {
 					$url       = get_term_link( $term );
@@ -71,12 +87,12 @@ final class ContentSearch {
 						'url'        => is_wp_error( $url ) ? '' : $url,
 						'context'    => $term->taxonomy,
 					); }
-				$total += count( $terms );
 			}
 		}
+		$total = $post_total + $term_total;
 
 		return array(
-			'items' => array_slice( $results, 0, $per_page ),
+			'items' => $results,
 			'total' => $total,
 			'page'  => $page,
 			'pages' => max( 1, (int) ceil( $total / $per_page ) ),

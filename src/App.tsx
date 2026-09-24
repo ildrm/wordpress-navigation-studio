@@ -6,7 +6,18 @@ import { UtilityPage } from './components/UtilityPages';
 
 export default function App() {
 	const params = new URLSearchParams( window.location.search );
-	const [ page, setPage ] = useState( params.get( 'view' ) ?? 'menus' );
+	const pages = new Set( [
+		'menus',
+		'templates',
+		'transfer',
+		'settings',
+		'integrations',
+		'diagnostics',
+	] );
+	const requestedPage = params.get( 'view' ) ?? 'menus';
+	const [ page, setPage ] = useState(
+		pages.has( requestedPage ) ? requestedPage : 'menus'
+	);
 	const [ editing, setEditing ] = useState< string | null >(
 		params.get( 'menu' )
 	);

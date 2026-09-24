@@ -8,6 +8,7 @@
 namespace NavigationStudio\Tests\Domain;
 
 use InvalidArgumentException;
+use NavigationStudio\Domain\Navigation;
 use NavigationStudio\Domain\Node;
 use NavigationStudio\Domain\Validator;
 use WP_UnitTestCase;
@@ -53,12 +54,37 @@ final class ValidatorTest extends WP_UnitTestCase {
 		);
 	}
 
+	public function test_rejects_duplicate_root_ids(): void {
+		$this->expectException( InvalidArgumentException::class );
+		Validator::assert_valid(
+			array(
+				new Node( array( 'id' => 'root-01' ) ),
+				new Node( array( 'id' => 'root-01' ) ),
+			)
+		);
+	}
+
+	public function test_navigation_key_must_match_its_native_source(): void {
+		$this->expectException( InvalidArgumentException::class );
+		new Navigation( 'classic:10', 'Main', 'block', 10, array() );
+	}
+
 	public function test_rejects_unsafe_url_protocols(): void {
 		$this->expectException( InvalidArgumentException::class );
 		new Node(
 			array(
 				'id'  => 'unsafe-1',
 				'url' => 'javascript:alert(1)',
+			)
+		);
+	}
+
+	public function test_rejects_protocol_relative_urls(): void {
+		$this->expectException( InvalidArgumentException::class );
+		new Node(
+			array(
+				'id'  => 'unsafe-2',
+				'url' => '//example.com/path',
 			)
 		);
 	}

@@ -2,6 +2,7 @@ import type { EditorState, NavNode, Navigation } from '../types';
 import {
 	duplicateBranch,
 	indentNode,
+	mergeNode,
 	moveNode,
 	outdentNode,
 	removeNodes,
@@ -71,6 +72,9 @@ const mutate = (
 	nodes: NavNode[],
 	label: string
 ): EditorState => {
+	if ( nodes === state.navigation.nodes ) {
+		return state;
+	}
 	const errors = validateTree( nodes );
 	if ( errors.length ) {
 		return { ...state, status: 'error', statusMessage: errors[ 0 ] };
@@ -121,7 +125,7 @@ export function editorReducer(
 				state,
 				state.navigation.nodes.map( ( node ) =>
 					action.ids.includes( node.id )
-						? { ...node, ...action.patch }
+						? mergeNode( node, action.patch )
 						: node
 				),
 				action.label

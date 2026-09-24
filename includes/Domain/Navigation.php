@@ -27,10 +27,29 @@ final class Navigation implements \JsonSerializable {
 		if ( ! in_array( $source_type, array( 'classic', 'block' ), true ) ) {
 			throw new InvalidArgumentException( 'Unknown navigation source type.' );
 		}
-		$this->key         = sanitize_text_field( $key );
-		$this->name        = sanitize_text_field( $name );
+
+		$key       = sanitize_text_field( $key );
+		$name      = sanitize_text_field( $name );
+		$source_id = absint( $source_id );
+		if ( ! preg_match( '/^(classic|block):(\d+)$/', $key, $matches ) ) {
+			throw new InvalidArgumentException( 'Invalid navigation key.' );
+		}
+		if ( $matches[1] !== $source_type || (int) $matches[2] !== $source_id ) {
+			throw new InvalidArgumentException( 'Navigation key and source do not match.' );
+		}
+		if ( '' === $name ) {
+			throw new InvalidArgumentException( 'A navigation name is required.' );
+		}
+		foreach ( $nodes as $node ) {
+			if ( ! $node instanceof Node ) {
+				throw new InvalidArgumentException( 'Navigation nodes must be Node instances.' );
+			}
+		}
+
+		$this->key         = $key;
+		$this->name        = $name;
 		$this->source_type = $source_type;
-		$this->source_id   = absint( $source_id );
+		$this->source_id   = $source_id;
 		$this->nodes       = array_values( $nodes );
 		$this->settings    = $settings;
 		Validator::assert_valid( $this->nodes );

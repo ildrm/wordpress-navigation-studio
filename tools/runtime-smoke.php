@@ -36,7 +36,7 @@ function navstudio_smoke_request( string $method, string $route, ?array $body = 
 	return rest_do_request( $request );
 }
 
-$plugin = 'navigation-studio/navigation-studio.php';
+$plugin = defined( 'NAVSTUDIO_FILE' ) ? plugin_basename( NAVSTUDIO_FILE ) : 'navigation-studio/navigation-studio.php';
 if ( ! is_plugin_active( $plugin ) ) {
 	$result = activate_plugin( $plugin );
 	navstudio_smoke_assert( ! is_wp_error( $result ), is_wp_error( $result ) ? $result->get_error_message() : 'Activation failed.' );

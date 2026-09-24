@@ -3,6 +3,7 @@ import {
 	descendants,
 	duplicateBranch,
 	indentNode,
+	mergeNode,
 	moveNode,
 	outdentNode,
 	removeNodes,
@@ -35,6 +36,11 @@ describe( 'navigation tree commands', () => {
 	it( 'refuses to move a parent inside its descendant', () => {
 		const nodes = [ node( 'aaaaaa' ), node( 'bbbbbb', 'aaaaaa' ) ];
 		expect( moveNode( nodes, 'aaaaaa', 'bbbbbb', 'inside' ) ).toBe( nodes );
+	} );
+
+	it( 'returns the original collection for an invalid move target', () => {
+		const nodes = [ node( 'aaaaaa' ), node( 'bbbbbb' ) ];
+		expect( moveNode( nodes, 'aaaaaa', 'missing', 'after' ) ).toBe( nodes );
 	} );
 
 	it( 'indents and outdents using logical siblings', () => {
@@ -72,6 +78,21 @@ describe( 'navigation tree commands', () => {
 		expect( descendants( result, result[ 2 ].id ) ).toEqual( [
 			result[ 3 ].id,
 		] );
+	} );
+
+	it( 'merges nested properties without discarding existing values', () => {
+		const original = {
+			...node( 'aaaaaa' ),
+			attributes: { target: '_blank', rel: 'noopener' },
+		};
+		const changed = mergeNode( original, {
+			attributes: { className: 'featured' },
+		} );
+		expect( changed.attributes ).toEqual( {
+			target: '_blank',
+			rel: 'noopener',
+			className: 'featured',
+		} );
 	} );
 
 	it( 'detects duplicate IDs, missing parents, and cycles', () => {

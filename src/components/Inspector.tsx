@@ -64,6 +64,13 @@ export function Inspector( {
 	const update = ( patch: Partial< NavNode >, label: string ) =>
 		dispatch( { type: 'UPDATE_NODE', id: node.id, patch, label } );
 	const attrs = node.attributes;
+	const loggedInCondition = node.conditions.find(
+		( condition ) => condition.type === 'logged_in'
+	);
+	let audience: 'everyone' | 'logged-in' | 'logged-out' = 'everyone';
+	if ( loggedInCondition ) {
+		audience = loggedInCondition.value ? 'logged-in' : 'logged-out';
+	}
 	return (
 		<aside
 			className="navstudio-panel navstudio-inspector"
@@ -95,7 +102,16 @@ export function Inspector( {
 						value={ node.url }
 						onChange={ ( url ) =>
 							update(
-								{ url },
+								{
+									url,
+									...( node.objectId
+										? {
+												type: 'custom',
+												objectType: 'custom',
+												objectId: 0,
+											}
+										: {} ),
+								},
 								__( 'Changed destination', 'navigation-studio' )
 							)
 						}
@@ -270,11 +286,7 @@ export function Inspector( {
 				>
 					<SelectControl
 						label={ __( 'Audience', 'navigation-studio' ) }
-						value={
-							String(
-								node.conditions[ 0 ]?.value ?? 'everyone'
-							) as 'everyone' | 'logged-in' | 'logged-out'
-						}
+						value={ audience }
 						onChange={ ( value ) =>
 							update(
 								{

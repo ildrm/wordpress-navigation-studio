@@ -107,6 +107,7 @@ export function ContentLibrary( {
 					items.map( ( item ) => (
 						<div key={ item.id } className="navstudio-library-item">
 							<CheckboxControl
+								label={ `${ __( 'Select', 'navigation-studio' ) } ${ item.title }` }
 								checked={ chosen.has( item.id ) }
 								onChange={ ( checked ) => {
 									const next = new Set( chosen );

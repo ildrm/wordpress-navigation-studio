@@ -1,5 +1,11 @@
 import apiFetch from '@wordpress/api-fetch';
-import type { ContentItem, MenuSummary, Navigation } from './types';
+import type {
+	ContentItem,
+	MenuSummary,
+	Navigation,
+	Settings,
+	TemplateSummary,
+} from './types';
 
 apiFetch.use(
 	apiFetch.createNonceMiddleware( window.navStudioSettings.nonce )
@@ -55,6 +61,10 @@ export const api = {
 				node_id: string;
 			} >;
 		} >( { path: path( `menus/${ encodeURIComponent( key ) }/health` ) } ),
+	exportNavigation: ( key: string ) =>
+		apiFetch< Record< string, unknown > >( {
+			path: path( `menus/${ encodeURIComponent( key ) }/export` ),
+		} ),
 	lock: ( key: string ) =>
 		apiFetch< { owned: boolean; userName?: string } >( {
 			path: path( `menus/${ encodeURIComponent( key ) }/lock` ),
@@ -65,8 +75,13 @@ export const api = {
 			path: path( `menus/${ encodeURIComponent( key ) }/lock` ),
 			method: 'DELETE',
 		} ),
-	settings: () =>
-		apiFetch< Record< string, unknown > >( { path: path( 'settings' ) } ),
+	settings: () => apiFetch< Settings >( { path: path( 'settings' ) } ),
+	saveSettings: ( settings: Settings ) =>
+		apiFetch< Settings >( {
+			path: path( 'settings' ),
+			method: 'PUT',
+			data: settings,
+		} ),
 	diagnostics: () =>
 		apiFetch< Record< string, unknown > >( {
 			path: path( 'diagnostics' ),
@@ -86,7 +101,7 @@ export const api = {
 			data: { content, sourceType },
 		} ),
 	templates: () =>
-		apiFetch< { items: Array< Record< string, unknown > > } >( {
+		apiFetch< { items: TemplateSummary[] } >( {
 			path: path( 'templates' ),
 		} ),
 };

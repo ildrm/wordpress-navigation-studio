@@ -205,6 +205,12 @@ final class Api {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'import_preview' ),
 				'permission_callback' => $admin,
+				'args'                => array(
+					'content' => array(
+						'required' => true,
+						'type'     => 'string',
+					),
+				),
 			)
 		);
 		register_rest_route(
@@ -214,6 +220,16 @@ final class Api {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'import_commit' ),
 				'permission_callback' => $admin,
+				'args'                => array(
+					'content'    => array(
+						'required' => true,
+						'type'     => 'string',
+					),
+					'sourceType' => array(
+						'type' => 'string',
+						'enum' => array( 'classic', 'block' ),
+					),
+				),
 			)
 		);
 		register_rest_route(
@@ -229,6 +245,18 @@ final class Api {
 					'methods'             => 'POST',
 					'callback'            => array( $this, 'save_template' ),
 					'permission_callback' => $admin,
+					'args'                => array(
+						'name'    => array(
+							'required'  => true,
+							'type'      => 'string',
+							'minLength' => 1,
+							'maxLength' => 191,
+						),
+						'payload' => array(
+							'required' => true,
+							'type'     => 'object',
+						),
+					),
 				),
 			)
 		);
@@ -343,6 +371,9 @@ final class Api {
 					)
 				); }
 			$nav = ! empty( $data['navigation'] ) ? Navigation::from_array( (array) $data['navigation'] ) : $this->draft_navigation( $key );
+			if ( $nav->key() !== $key ) {
+				return new WP_Error( 'navstudio_key_mismatch', __( 'The payload does not match this navigation.', 'navigation-studio' ), array( 'status' => 400 ) );
+			}
 			$this->revisions->create( $published, get_current_user_id(), __( 'Before publish', 'navigation-studio' ) );
 			$saved = $this->native->publish( $nav );
 			$this->revisions->create( $saved, get_current_user_id(), __( 'Published', 'navigation-studio' ) );
@@ -389,7 +420,7 @@ final class Api {
 			return $this->error( $error ); } }
 	public function lock( WP_REST_Request $request ): WP_REST_Response {
 		$lock = $this->locks->acquire( (string) $request['key'], get_current_user_id() );
-		return new WP_REST_Response( $lock, $lock['owned'] ? 200 : 409 ); }
+		return new WP_REST_Response( $lock, 200 ); }
 	public function unlock( WP_REST_Request $request ): WP_REST_Response {
 		$this->locks->release( (string) $request['key'], get_current_user_id() );
 		return new WP_REST_Response( null, 204 ); }
@@ -447,7 +478,6 @@ final class Api {
 		$raw      = (array) $request->get_json_params();
 		$settings = array(
 			'enhancedRendering'     => ! empty( $raw['enhancedRendering'] ),
-			'externalLinkChecks'    => ! empty( $raw['externalLinkChecks'] ),
 			'revisionRetention'     => min( 500, max( 10, absint( $raw['revisionRetention'] ?? 100 ) ) ),
 			'deleteDataOnUninstall' => ! empty( $raw['deleteDataOnUninstall'] ),
 		);
@@ -492,7 +522,6 @@ final class Api {
 			get_option( 'navstudio_settings', array() ),
 			array(
 				'enhancedRendering'     => false,
-				'externalLinkChecks'    => false,
 				'revisionRetention'     => 100,
 				'deleteDataOnUninstall' => false,
 			)

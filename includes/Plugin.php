@@ -10,6 +10,7 @@ namespace NavigationStudio;
 use NavigationStudio\Admin\AdminApp;
 use NavigationStudio\Frontend\Renderer;
 use NavigationStudio\Infrastructure\DraftRepository;
+use NavigationStudio\Infrastructure\Activator;
 use NavigationStudio\Infrastructure\LockManager;
 use NavigationStudio\Infrastructure\NativeRepository;
 use NavigationStudio\Infrastructure\RevisionRepository;
@@ -38,6 +39,7 @@ final class Plugin {
 		$this->booted = true;
 
 		load_plugin_textdomain( 'navigation-studio', false, dirname( plugin_basename( NAVSTUDIO_FILE ) ) . '/languages' );
+		Activator::maybe_upgrade();
 
 		$native    = new NativeRepository();
 		$drafts    = new DraftRepository();
@@ -47,6 +49,7 @@ final class Plugin {
 		( new Api( $native, $drafts, $revisions, $locks ) )->register();
 		( new AdminApp() )->register();
 		( new Renderer() )->register();
+		add_action( 'navstudio_daily_maintenance', array( $revisions, 'prune_all' ) );
 
 		do_action( 'navstudio_loaded', $this );
 	}

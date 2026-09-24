@@ -15,6 +15,7 @@ final class Renderer {
 	/** @var bool */ private $needs_assets = false;
 	public function register(): void {
 		add_filter( 'wp_nav_menu_objects', array( $this, 'filter_items' ), 20, 2 );
+		add_filter( 'nav_menu_css_class', array( $this, 'item_classes' ), 20, 4 );
 		add_filter( 'nav_menu_link_attributes', array( $this, 'link_attributes' ), 20, 4 );
 		add_filter( 'nav_menu_submenu_css_class', array( $this, 'submenu_class' ) );
 		add_action( 'wp_footer', array( $this, 'assets' ), 1 );
@@ -65,6 +66,10 @@ final class Renderer {
 		$meta = get_post_meta( $item->ID, '_navstudio_meta', true );
 		if ( ! is_array( $meta ) ) {
 			return $atts; }
+		$attributes = (array) ( $meta['attributes'] ?? array() );
+		if ( ! empty( $attributes['ariaLabel'] ) ) {
+			$atts['aria-label'] = sanitize_text_field( $attributes['ariaLabel'] );
+		}
 		$appearance = (array) ( $meta['appearance'] ?? array() );
 		if ( ! empty( $appearance['badgeText'] ) ) {
 			$atts['data-navstudio-badge'] = sanitize_text_field( $appearance['badgeText'] ); }
@@ -77,6 +82,37 @@ final class Renderer {
 		if ( $hidden ) {
 			$atts['data-navstudio-hidden'] = implode( ' ', $hidden ); }
 		return $atts;
+	}
+
+	/**
+	 * @param array<int,string> $classes Menu item classes.
+	 * @param \WP_Post          $item Menu item.
+	 * @param mixed             $args Menu arguments.
+	 * @param int               $depth Menu depth.
+	 * @return array<int,string>
+	 */
+	public function item_classes( array $classes, $item, $args, $depth ): array {
+		unset( $args, $depth );
+		if ( ! $this->enhanced_enabled() ) {
+			return $classes;
+		}
+		$meta = get_post_meta( $item->ID, '_navstudio_meta', true );
+		if ( ! is_array( $meta ) ) {
+			return $classes;
+		}
+		$responsive = (array) ( $meta['responsive'] ?? array() );
+		foreach ( array( 'desktop', 'tablet', 'mobile' ) as $viewport ) {
+			if ( isset( $responsive[ $viewport ] ) && false === $responsive[ $viewport ] ) {
+				$classes[] = 'navstudio-hide-' . $viewport;
+			}
+		}
+		$mega_menu = (array) ( $meta['megaMenu'] ?? array() );
+		if ( ! empty( $mega_menu['enabled'] ) ) {
+			$columns   = min( 6, max( 2, absint( $mega_menu['columns'] ?? 3 ) ) );
+			$classes[] = 'navstudio-mega-menu';
+			$classes[] = 'navstudio-mega-menu--columns-' . $columns;
+		}
+		return array_unique( $classes );
 	}
 
 	/**

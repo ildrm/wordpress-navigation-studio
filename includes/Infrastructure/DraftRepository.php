@@ -34,25 +34,44 @@ final class DraftRepository {
 		global $wpdb;
 		$table   = $wpdb->prefix . 'navstudio_drafts';
 		$current = $this->get( $navigation->key(), $user_id );
-		if ( null !== $current && null !== $expected_version && $expected_version !== $current['version'] ) {
+		if (
+			( null === $current && null !== $expected_version ) ||
+			( null !== $current && $expected_version !== $current['version'] )
+		) {
 			throw new RuntimeException( 'Draft version conflict.', 409 );
 		}
 		$version = $current ? (int) $current['version'] + 1 : 1;
 		$payload = wp_json_encode( $navigation, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
-		$result  = $wpdb->replace(
-			$table,
-			array(
-				'navigation_key' => $navigation->key(),
-				'user_id'        => $user_id,
-				'version'        => $version,
-				'payload'        => $payload,
-				'checksum'       => $navigation->checksum(),
-				'updated_at'     => current_time( 'mysql', true ),
-			),
-			array( '%s', '%d', '%d', '%s', '%s', '%s' )
+		$data    = array(
+			'navigation_key' => $navigation->key(),
+			'user_id'        => $user_id,
+			'version'        => $version,
+			'payload'        => $payload,
+			'checksum'       => $navigation->checksum(),
+			'updated_at'     => current_time( 'mysql', true ),
 		);
-		if ( false === $result ) {
-			throw new RuntimeException( 'The draft could not be saved.' ); }
+		$formats = array( '%s', '%d', '%d', '%s', '%s', '%s' );
+		if ( $current ) {
+			$result = $wpdb->update(
+				$table,
+				$data,
+				array(
+					'navigation_key' => $navigation->key(),
+					'user_id'        => $user_id,
+					'version'        => $expected_version,
+				),
+				$formats,
+				array( '%s', '%d', '%d' )
+			);
+			if ( 1 !== $result ) {
+				throw new RuntimeException( 'Draft version conflict.', 409 );
+			}
+		} else {
+			$result = $wpdb->insert( $table, $data, $formats );
+			if ( false === $result ) {
+				throw new RuntimeException( 'The draft could not be saved.' );
+			}
+		}
 		return $this->get( $navigation->key(), $user_id ) ?? array();
 	}
 

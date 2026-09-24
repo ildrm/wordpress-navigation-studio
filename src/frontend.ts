@@ -1,5 +1,7 @@
 import './styles/frontend.scss';
 
+let submenuIndex = 0;
+
 function enhanceNavigation( nav: HTMLElement ) {
 	const parents = nav.querySelectorAll< HTMLLIElement >( 'li:has(> ul)' );
 	parents.forEach( ( item, index ) => {
@@ -7,14 +9,19 @@ function enhanceNavigation( nav: HTMLElement ) {
 		if ( ! submenu ) {
 			return;
 		}
-		submenu.id ||= `navstudio-submenu-${ index }`;
+		submenu.id ||= `navstudio-submenu-${ ++submenuIndex }-${ index }`;
 		const toggle = document.createElement( 'button' );
 		toggle.type = 'button';
 		toggle.className = 'navstudio-submenu-toggle';
 		toggle.setAttribute( 'aria-expanded', 'false' );
 		toggle.setAttribute( 'aria-controls', submenu.id );
-		toggle.innerHTML =
-			'<span aria-hidden="true">▾</span><span class="screen-reader-text">Toggle submenu</span>';
+		const icon = document.createElement( 'span' );
+		icon.setAttribute( 'aria-hidden', 'true' );
+		icon.textContent = '▾';
+		const label = document.createElement( 'span' );
+		label.className = 'screen-reader-text';
+		label.textContent = 'Toggle submenu';
+		toggle.append( icon, label );
 		item.querySelector( ':scope > a' )?.after( toggle );
 		const close = () => {
 			toggle.setAttribute( 'aria-expanded', 'false' );

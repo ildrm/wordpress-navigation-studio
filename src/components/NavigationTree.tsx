@@ -27,6 +27,7 @@ export function NavigationTree( {
 	>( 'after' );
 	const [ liveMessage, setLiveMessage ] = useState( '' );
 	const lastSelected = useRef< string | null >( null );
+	const cancelRename = useRef( false );
 	const query = state.filter.toLocaleLowerCase();
 	const base = visibleNodes(
 		state.navigation.nodes,
@@ -68,9 +69,11 @@ export function NavigationTree( {
 				( item ) => item.id === lastSelected.current
 			);
 			const end = nodes.findIndex( ( item ) => item.id === node.id );
-			selected = nodes
-				.slice( Math.min( start, end ), Math.max( start, end ) + 1 )
-				.map( ( item ) => item.id );
+			if ( start >= 0 && end >= 0 ) {
+				selected = nodes
+					.slice( Math.min( start, end ), Math.max( start, end ) + 1 )
+					.map( ( item ) => item.id );
+			}
 		}
 		lastSelected.current = node.id;
 		dispatch( { type: 'SELECT', ids: selected } );
@@ -139,6 +142,7 @@ export function NavigationTree( {
 		}
 		if ( event.key === 'Enter' ) {
 			event.preventDefault();
+			cancelRename.current = false;
 			setEditing( node.id );
 		}
 		if ( event.key === 'Delete' && state.selected.length ) {
@@ -313,9 +317,10 @@ export function NavigationTree( {
 									onClick={ ( event ) =>
 										select( event, node )
 									}
-									onDoubleClick={ () =>
-										setEditing( node.id )
-									}
+									onDoubleClick={ () => {
+										cancelRename.current = false;
+										setEditing( node.id );
+									} }
 									onKeyDown={ ( event ) =>
 										keyboard( event, node, index )
 									}
@@ -381,19 +386,22 @@ export function NavigationTree( {
 												'navigation-studio'
 											) }
 											onBlur={ ( event ) => {
-												dispatch( {
-													type: 'UPDATE_NODE',
-													id: node.id,
-													patch: {
-														label: event
-															.currentTarget
-															.value,
-													},
-													label: __(
-														'Renamed item',
-														'navigation-studio'
-													),
-												} );
+												if ( ! cancelRename.current ) {
+													dispatch( {
+														type: 'UPDATE_NODE',
+														id: node.id,
+														patch: {
+															label: event
+																.currentTarget
+																.value,
+														},
+														label: __(
+															'Renamed item',
+															'navigation-studio'
+														),
+													} );
+												}
+												cancelRename.current = false;
 												setEditing( null );
 											} }
 											onKeyDown={ ( event ) => {
@@ -401,7 +409,9 @@ export function NavigationTree( {
 													event.currentTarget.blur();
 												}
 												if ( event.key === 'Escape' ) {
-													setEditing( null );
+													event.preventDefault();
+													cancelRename.current = true;
+													event.currentTarget.blur();
 												}
 												event.stopPropagation();
 											} }

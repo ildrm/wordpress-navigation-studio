@@ -31,12 +31,18 @@ export function Editor( {
 	} | null >( null );
 	const [ loadError, setLoadError ] = useState( '' );
 	useEffect( () => {
+		let active = true;
+		let lockTimer: number | undefined;
 		Promise.all( [
 			api.menu( menuKey ),
 			api.draft( menuKey ),
 			api.lock( menuKey ),
 		] )
 			.then( ( [ published, draft, lock ] ) => {
+				if ( ! active ) {
+					api.unlock( menuKey ).catch( () => undefined );
+					return;
+				}
 				if ( ! lock.owned ) {
 					setLoadError(
 						`${ lock.userName ?? __( 'Another user', 'navigation-studio' ) } ${ __( 'is currently editing. You can review the navigation, but publishing may conflict.', 'navigation-studio' ) }`
@@ -57,8 +63,14 @@ export function Editor( {
 					navigation: { ...navigation, checksum: published.checksum },
 					draftVersion: draft?.version ?? null,
 				} );
+				lockTimer = window.setInterval( () => {
+					api.lock( menuKey ).catch( () => undefined );
+				}, 60_000 );
 			} )
-			.catch( ( reason ) =>
+			.catch( ( reason ) => {
+				if ( ! active ) {
+					return;
+				}
 				setLoadError(
 					reason instanceof Error
 						? reason.message
@@ -66,9 +78,13 @@ export function Editor( {
 								'Navigation could not be loaded.',
 								'navigation-studio'
 							)
-				)
-			);
+				);
+			} );
 		return () => {
+			active = false;
+			if ( lockTimer !== undefined ) {
+				window.clearInterval( lockTimer );
+			}
 			api.unlock( menuKey ).catch( () => undefined );
 		};
 	}, [ menuKey ] );

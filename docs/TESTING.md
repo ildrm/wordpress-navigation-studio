@@ -10,12 +10,20 @@ composer install
 npm run build
 npm run lint:js
 npm run lint:css
+npm run lint:types
 npm run test:unit
 composer lint
 composer phpstan
-composer test
 npm run env:start
 npm run test:e2e
+```
+
+PHPUnit requires the WordPress test library. Run it in the dedicated `wp-env` test container:
+
+```bash
+npm run env:test:start
+npx wp-env run tests-cli --config .wp-env.tests.json \
+  --env-cwd=wp-content/plugins/wordpress-navigation-studio composer test
 ```
 
 The E2E configuration runs Chromium, Firefox, and WebKit. WordPress integration tests use the test library exposed by `wp-env`. Run Plugin Check against the generated ZIP rather than only the source directory.

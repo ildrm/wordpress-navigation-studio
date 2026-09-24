@@ -17,7 +17,14 @@ final class TemplateRepository {
 		global $wpdb;
 		$table = $wpdb->prefix . 'navstudio_templates';
 		$rows  = $wpdb->get_results( "SELECT id, name, slug, scope, user_id, created_at, updated_at FROM $table ORDER BY name ASC", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return $rows ? $rows : array();
+		return array_map(
+			static function ( $row ) {
+				$row['id']      = (int) $row['id'];
+				$row['user_id'] = (int) $row['user_id'];
+				return $row;
+			},
+			$rows ? $rows : array()
+		);
 	}
 	/**
 	 * @param string              $name Template name.
@@ -28,9 +35,13 @@ final class TemplateRepository {
 	 */
 	public function save( string $name, array $payload, int $user_id, int $id = 0 ): array {
 		global $wpdb;
+		$name = sanitize_text_field( $name );
+		if ( '' === $name ) {
+			throw new RuntimeException( 'A template name is required.' );
+		}
 		$table = $wpdb->prefix . 'navstudio_templates';
 		$row   = array(
-			'name'       => sanitize_text_field( $name ),
+			'name'       => $name,
 			'slug'       => sanitize_title( $name ),
 			'scope'      => 'site',
 			'payload'    => wp_json_encode( $payload ),

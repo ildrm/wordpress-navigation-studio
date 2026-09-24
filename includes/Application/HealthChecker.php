@@ -37,11 +37,30 @@ final class HealthChecker {
 				$parent = $nodes[ $parent ]->parent_id(); }
 			if ( $depth > 3 ) {
 				$issues[] = $this->issue( 'warning', 'deep_nesting', $node->id(), __( 'Deep nesting may be difficult to use.', 'navigation-studio' ) ); }
-			if ( $data['objectId'] && 'custom' !== $data['type'] && ! get_post( (int) $data['objectId'] ) && ! get_term( (int) $data['objectId'] ) ) {
+			if ( $data['objectId'] && ! $this->source_exists( $data ) ) {
 				$issues[] = $this->issue( 'error', 'missing_source', $node->id(), __( 'Linked source content is unavailable.', 'navigation-studio' ) ); }
 		}
 		return $issues;
 	}
+
+	/** @param array<string,mixed> $data Node data. */
+	private function source_exists( array $data ): bool {
+		$type        = (string) $data['type'];
+		$object_type = (string) $data['objectType'];
+		$object_id   = (int) $data['objectId'];
+		if ( 'custom' === $type || 'block-unsupported' === $type ) {
+			return true;
+		}
+		if ( 'taxonomy' === $type || ( 'block' === $type && 'taxonomy' === $object_type ) ) {
+			$term = get_term( $object_id );
+			return ! is_wp_error( $term ) && ! empty( $term );
+		}
+		if ( 'post_type_archive' === $type ) {
+			return null !== get_post_type_object( $object_type );
+		}
+		return null !== get_post( $object_id );
+	}
+
 	/** @return array<string,mixed> */
 	private function issue( string $severity, string $code, string $node_id, string $message ): array {
 		return array(

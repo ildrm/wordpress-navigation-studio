@@ -12,12 +12,17 @@ use InvalidArgumentException;
 defined( 'ABSPATH' ) || exit;
 
 final class Validator {
+	private const MAX_NODES = 5000;
+
 	/** @param Node[] $nodes */
 	public static function assert_valid( array $nodes ): void {
+		if ( count( $nodes ) > self::MAX_NODES ) {
+			throw new InvalidArgumentException( 'Navigation contains too many nodes.' );
+		}
 		$parents = array();
 		$ordered = array();
 		foreach ( $nodes as $node ) {
-			if ( isset( $parents[ $node->id() ] ) ) {
+			if ( array_key_exists( $node->id(), $parents ) ) {
 				throw new InvalidArgumentException( 'Duplicate node ID: ' . $node->id() );
 			}
 			$parents[ $node->id() ] = $node->parent_id();
@@ -28,7 +33,7 @@ final class Validator {
 		}
 
 		foreach ( $parents as $id => $parent ) {
-			if ( null !== $parent && ! isset( $parents[ $parent ] ) ) {
+			if ( null !== $parent && ! array_key_exists( $parent, $parents ) ) {
 				throw new InvalidArgumentException( 'Node references a missing parent: ' . $id );
 			}
 			$seen   = array( $id => true );

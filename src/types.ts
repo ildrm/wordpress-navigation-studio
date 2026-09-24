@@ -46,6 +46,22 @@ export interface MenuSummary {
 	hasDraft: boolean;
 }
 
+export interface Settings {
+	enhancedRendering: boolean;
+	revisionRetention: number;
+	deleteDataOnUninstall: boolean;
+}
+
+export interface TemplateSummary {
+	id: number;
+	name: string;
+	slug: string;
+	scope: string;
+	user_id: number;
+	created_at: string;
+	updated_at: string;
+}
+
 export interface ContentItem {
 	id: string;
 	objectId: number;

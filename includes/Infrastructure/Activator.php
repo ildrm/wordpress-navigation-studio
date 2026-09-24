@@ -10,6 +10,12 @@ namespace NavigationStudio\Infrastructure;
 defined( 'ABSPATH' ) || exit;
 
 final class Activator {
+	public static function maybe_upgrade(): void {
+		if ( NAVSTUDIO_SCHEMA_VERSION !== (string) get_option( 'navstudio_schema_version', '' ) ) {
+			self::install_site();
+		}
+	}
+
 	public static function activate( bool $network_wide = false ): void {
 		if ( is_multisite() && $network_wide ) {
 			$site_ids = get_sites(

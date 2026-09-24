@@ -46,7 +46,8 @@ final class TransferService {
 		$navigation = (array) ( $data['navigation'] ?? array() );
 		if ( count( (array) ( $navigation['nodes'] ?? array() ) ) > self::MAX_NODES ) {
 			throw new RuntimeException( 'Import contains too many nodes.' ); }
-		$navigation['key']      = (string) ( $navigation['key'] ?? 'classic:0' );
+		$source_type            = (string) ( $navigation['sourceType'] ?? '' );
+		$navigation['key']      = $source_type . ':0';
 		$navigation['sourceId'] = 0;
 		return array(
 			'manifest'   => array_diff_key( $data, array( 'navigation' => true ) ),

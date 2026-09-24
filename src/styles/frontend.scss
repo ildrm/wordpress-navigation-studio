@@ -26,21 +26,24 @@
 
 @media (min-width: 783px) {
 
-	[data-navstudio-hidden~="desktop"] {
+	[data-navstudio-hidden~="desktop"],
+	.navstudio-hide-desktop {
 		display: none !important;
 	}
 }
 
 @media (min-width: 601px) and (max-width: 782px) {
 
-	[data-navstudio-hidden~="tablet"] {
+	[data-navstudio-hidden~="tablet"],
+	.navstudio-hide-tablet {
 		display: none !important;
 	}
 }
 
 @media (max-width: 600px) {
 
-	[data-navstudio-hidden~="mobile"] {
+	[data-navstudio-hidden~="mobile"],
+	.navstudio-hide-mobile {
 		display: none !important;
 	}
 
@@ -50,6 +53,28 @@
 
 	.menu-item-has-children.is-open > .sub-menu {
 		display: block;
+	}
+}
+
+.navstudio-mega-menu > .sub-menu {
+	display: grid;
+	grid-template-columns: repeat(var(--navstudio-mega-columns, 3), minmax(0, 1fr));
+}
+
+@for $columns from 2 through 6 {
+	.navstudio-mega-menu--columns-#{ $columns } {
+		--navstudio-mega-columns: #{$columns};
+	}
+}
+
+@media (max-width: 600px) {
+
+	.menu-item-has-children.navstudio-mega-menu > .sub-menu {
+		display: none;
+	}
+
+	.menu-item-has-children.navstudio-mega-menu.is-open > .sub-menu {
+		display: grid;
 	}
 }
 

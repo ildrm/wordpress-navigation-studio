@@ -95,8 +95,33 @@ export function updateNode(
 	patch: Partial< NavNode >
 ): NavNode[] {
 	return nodes.map( ( node ) =>
-		node.id === id ? { ...node, ...patch } : node
+		node.id === id ? mergeNode( node, patch ) : node
 	);
+}
+
+export function mergeNode( node: NavNode, patch: Partial< NavNode > ): NavNode {
+	return {
+		...node,
+		...patch,
+		attributes: patch.attributes
+			? { ...node.attributes, ...patch.attributes }
+			: node.attributes,
+		appearance: patch.appearance
+			? { ...node.appearance, ...patch.appearance }
+			: node.appearance,
+		responsive: patch.responsive
+			? { ...node.responsive, ...patch.responsive }
+			: node.responsive,
+		dynamic: patch.dynamic
+			? { ...node.dynamic, ...patch.dynamic }
+			: node.dynamic,
+		megaMenu: patch.megaMenu
+			? { ...node.megaMenu, ...patch.megaMenu }
+			: node.megaMenu,
+		source: patch.source
+			? { ...node.source, ...patch.source }
+			: node.source,
+	};
 }
 
 export function removeNodes(

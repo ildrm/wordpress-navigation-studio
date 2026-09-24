@@ -37,10 +37,11 @@ final class ClassicMenuAdapter implements AdapterInterface {
 
 		$nodes = array();
 		foreach ( $items as $item ) {
-			$extra   = get_post_meta( $item->ID, '_navstudio_meta', true );
-			$extra   = is_array( $extra ) ? $extra : array();
-			$classes = array_values( array_filter( array_map( 'sanitize_html_class', (array) $item->classes ) ) );
-			$nodes[] = new Node(
+			$extra             = get_post_meta( $item->ID, '_navstudio_meta', true );
+			$extra             = is_array( $extra ) ? $extra : array();
+			$stored_attributes = (array) ( $extra['attributes'] ?? array() );
+			$classes           = array_values( array_filter( array_map( 'sanitize_html_class', (array) $item->classes ) ) );
+			$nodes[]           = new Node(
 				array_merge(
 					$extra,
 					array(
@@ -57,6 +58,7 @@ final class ClassicMenuAdapter implements AdapterInterface {
 							'rel'       => $item->xfn,
 							'title'     => $item->attr_title,
 							'className' => implode( ' ', $classes ),
+							'ariaLabel' => $stored_attributes['ariaLabel'] ?? '',
 						),
 						'source'      => array( 'nativeId' => (int) $item->ID ),
 					)
@@ -126,7 +128,7 @@ final class ClassicMenuAdapter implements AdapterInterface {
 			$native_ids[ $node->id() ] = (int) $saved;
 			$kept[]                    = (int) $saved;
 			update_post_meta( (int) $saved, '_navstudio_uuid', $node->id() );
-			update_post_meta( (int) $saved, '_navstudio_meta', array_intersect_key( $data, array_flip( array( 'appearance', 'responsive', 'conditions', 'dynamic', 'megaMenu', 'source' ) ) ) );
+			update_post_meta( (int) $saved, '_navstudio_meta', array_intersect_key( $data, array_flip( array( 'attributes', 'appearance', 'responsive', 'conditions', 'dynamic', 'megaMenu', 'source' ) ) ) );
 		}
 
 		foreach ( is_array( $existing ) ? $existing : array() as $item ) {

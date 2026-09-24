@@ -61,8 +61,19 @@ final class RevisionRepository {
 
 	private function prune( string $navigation_key ): void {
 		global $wpdb;
-		$retention = min( 500, max( 10, (int) apply_filters( 'navstudio_revision_retention', 100, $navigation_key ) ) );
+		$settings  = get_option( 'navstudio_settings', array() );
+		$default   = is_array( $settings ) ? (int) ( $settings['revisionRetention'] ?? 100 ) : 100;
+		$retention = min( 500, max( 10, (int) apply_filters( 'navstudio_revision_retention', $default, $navigation_key ) ) );
 		$table     = $wpdb->prefix . 'navstudio_revisions';
 		$wpdb->query( $wpdb->prepare( "DELETE FROM $table WHERE navigation_key = %s AND id NOT IN (SELECT id FROM (SELECT id FROM $table WHERE navigation_key = %s ORDER BY id DESC LIMIT %d) kept)", $navigation_key, $navigation_key, $retention ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
+	public function prune_all(): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'navstudio_revisions';
+		$keys  = $wpdb->get_col( "SELECT DISTINCT navigation_key FROM $table" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared
+		foreach ( $keys as $key ) {
+			$this->prune( (string) $key );
+		}
 	}
 }

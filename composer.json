@@ -16,8 +16,8 @@
 		"yoast/phpunit-polyfills": "^2.0"
 	},
 	"scripts": {
-		"lint": "phpcs",
-		"phpstan": "phpstan analyse",
+		"lint": "@php -d error_reporting=24575 vendor/bin/phpcs",
+		"phpstan": "phpstan analyse --debug --no-progress --memory-limit=1G",
 		"test": "phpunit"
 	},
 	"config": {

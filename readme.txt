@@ -1,5 +1,5 @@
 === Navigation Studio ===
-Contributors: navigation-studio
+Contributors: ildrm
 Tags: navigation, menus, block themes, accessibility, mega menu
 Requires at least: 7.0
 Tested up to: 7.1

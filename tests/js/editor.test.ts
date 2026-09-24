@@ -28,4 +28,15 @@ describe( 'editor history', () => {
 		const redone = editorReducer( undone, { type: 'REDO' } );
 		expect( redone.navigation.nodes[ 0 ].label ).toBe( 'Start' );
 	} );
+
+	it( 'does not create history for a rejected structural mutation', () => {
+		const initial = initialState( navigation );
+		const changed = editorReducer( initial, {
+			type: 'MOVE',
+			id: 'aaaaaa',
+			targetId: 'missing',
+			position: 'after',
+		} );
+		expect( changed ).toBe( initial );
+	} );
 } );

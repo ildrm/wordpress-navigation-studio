@@ -9,6 +9,7 @@
 		"format": "wp-scripts format",
 		"lint:js": "wp-scripts lint-js",
 		"lint:css": "wp-scripts lint-style src/**/*.scss",
+		"lint:types": "tsc --noEmit",
 		"test:unit": "wp-scripts test-unit-js --runInBand",
 		"test:e2e": "wp-scripts test-playwright",
 		"env:start": "wp-env start",

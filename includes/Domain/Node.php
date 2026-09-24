@@ -22,8 +22,8 @@ final class Node implements \JsonSerializable {
 			throw new InvalidArgumentException( 'A stable node ID is required.' );
 		}
 
-		$url = isset( $data['url'] ) ? (string) $data['url'] : '';
-		if ( '' !== $url && ! self::is_safe_url( $url ) ) {
+		$url = self::sanitize_url( isset( $data['url'] ) ? (string) $data['url'] : '' );
+		if ( null === $url ) {
 			throw new InvalidArgumentException( 'The node URL is not allowed.' );
 		}
 
@@ -59,12 +59,19 @@ final class Node implements \JsonSerializable {
 		return null === $this->data['parentId'] ? null : (string) $this->data['parentId'];
 	}
 
-	private static function is_safe_url( string $url ): bool {
-		if ( preg_match( '/^(#|\/)/', $url ) ) {
-			return true;
+	private static function sanitize_url( string $url ): ?string {
+		if ( '' === $url ) {
+			return '';
+		}
+		if ( 0 === strpos( $url, '#' ) ) {
+			return sanitize_text_field( $url );
+		}
+		if ( 0 === strpos( $url, '/' ) && 0 !== strpos( $url, '//' ) ) {
+			return esc_url_raw( $url );
 		}
 		$protocols = array( 'http', 'https', 'mailto', 'tel' );
-		return '' !== esc_url_raw( $url, $protocols );
+		$clean     = esc_url_raw( $url, $protocols );
+		return '' === $clean ? null : $clean;
 	}
 
 	/**

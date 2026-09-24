@@ -21,12 +21,16 @@ final class BlockNavigationAdapter implements AdapterInterface {
 		$post = get_post( $source_id );
 		if ( ! $post || 'wp_navigation' !== $post->post_type ) {
 			throw new RuntimeException( 'Block navigation not found.' ); }
-		$sidecar  = get_post_meta( $source_id, '_navstudio_node_map', true );
-		$sidecar  = is_array( $sidecar ) ? $sidecar : array();
-		$metadata = get_post_meta( $source_id, '_navstudio_node_meta', true );
-		$metadata = is_array( $metadata ) ? $metadata : array();
-		$nodes    = array();
-		$this->walk_blocks( parse_blocks( $post->post_content ), null, $nodes, $sidecar, $metadata );
+		$stored_sidecar = get_post_meta( $source_id, '_navstudio_node_map', true );
+		$stored_sidecar = is_array( $stored_sidecar ) ? $stored_sidecar : array();
+		$metadata       = get_post_meta( $source_id, '_navstudio_node_meta', true );
+		$metadata       = is_array( $metadata ) ? $metadata : array();
+		$nodes          = array();
+		$sidecar        = array();
+		$this->walk_blocks( parse_blocks( $post->post_content ), null, $nodes, $stored_sidecar, $sidecar, $metadata );
+		if ( $sidecar !== $stored_sidecar ) {
+			update_post_meta( $source_id, '_navstudio_node_map', $sidecar );
+		}
 		return new Navigation( 'block:' . $post->ID, get_the_title( $post ), 'block', (int) $post->ID, $nodes, array() );
 	}
 
@@ -67,11 +71,23 @@ final class BlockNavigationAdapter implements AdapterInterface {
 				'id'         => (int) $post->ID,
 				'name'       => get_the_title( $post ),
 				'sourceType' => 'block',
-				'itemCount'  => count( parse_blocks( $post->post_content ) ),
+				'itemCount'  => $this->count_blocks( parse_blocks( $post->post_content ) ),
 				'modified'   => $post->post_modified_gmt,
 			);
 		}
 		return $result;
+	}
+
+	/** @param array<int,array<string,mixed>> $blocks Parsed blocks. */
+	private function count_blocks( array $blocks ): int {
+		$count = 0;
+		foreach ( $blocks as $block ) {
+			if ( ! empty( $block['blockName'] ) ) {
+				++$count;
+			}
+			$count += $this->count_blocks( (array) ( $block['innerBlocks'] ?? array() ) );
+		}
+		return $count;
 	}
 
 	/**
@@ -80,17 +96,18 @@ final class BlockNavigationAdapter implements AdapterInterface {
 	 * @param array<int,array<string,mixed>> $blocks Parsed blocks.
 	 * @param string|null                    $parent_id Parent node ID.
 	 * @param array<int,Node>                $nodes Collected nodes.
-	 * @param array<string,string>           $sidecar Stable ID sidecar.
+	 * @param array<string,string>           $stored_sidecar Existing stable ID sidecar.
+	 * @param array<string,string>           $sidecar Current stable ID sidecar.
 	 * @param array<string,array<string,mixed>> $metadata Plugin metadata keyed by stable ID.
 	 * @param string                         $path Current block path.
 	 */
-	private function walk_blocks( array $blocks, ?string $parent_id, array &$nodes, array &$sidecar, array $metadata, string $path = '' ): void {
+	private function walk_blocks( array $blocks, ?string $parent_id, array &$nodes, array $stored_sidecar, array &$sidecar, array $metadata, string $path = '' ): void {
 		foreach ( $blocks as $index => $block ) {
 			$current = '' === $path ? (string) $index : $path . '.' . $index;
 			$name    = (string) ( $block['blockName'] ?? '' );
 			$attrs   = (array) ( $block['attrs'] ?? array() );
 			if ( in_array( $name, array( 'core/navigation-link', 'core/navigation-submenu', 'core/home-link' ), true ) ) {
-				$uuid                = $sidecar[ $current ] ?? wp_generate_uuid4();
+				$uuid                = $stored_sidecar[ $current ] ?? wp_generate_uuid4();
 				$nodes[]             = new Node(
 					array_merge(
 						(array) ( $metadata[ $uuid ] ?? array() ),
@@ -110,15 +127,16 @@ final class BlockNavigationAdapter implements AdapterInterface {
 							),
 							'source'     => array(
 								'blockName' => $name,
+								'blockType' => $attrs['type'] ?? '',
 								'path'      => $current,
 							),
 						)
 					)
 				);
 				$sidecar[ $current ] = $uuid;
-				$this->walk_blocks( (array) ( $block['innerBlocks'] ?? array() ), $uuid, $nodes, $sidecar, $metadata, $current );
+				$this->walk_blocks( (array) ( $block['innerBlocks'] ?? array() ), $uuid, $nodes, $stored_sidecar, $sidecar, $metadata, $current );
 			} elseif ( '' !== $name ) {
-				$uuid                = $sidecar[ $current ] ?? wp_generate_uuid4();
+				$uuid                = $stored_sidecar[ $current ] ?? wp_generate_uuid4();
 				$nodes[]             = new Node(
 					array_merge(
 						(array) ( $metadata[ $uuid ] ?? array() ),
@@ -140,7 +158,7 @@ final class BlockNavigationAdapter implements AdapterInterface {
 				);
 				$sidecar[ $current ] = $uuid;
 			} else {
-				$this->walk_blocks( (array) ( $block['innerBlocks'] ?? array() ), $parent_id, $nodes, $sidecar, $metadata, $current );
+				$this->walk_blocks( (array) ( $block['innerBlocks'] ?? array() ), $parent_id, $nodes, $stored_sidecar, $sidecar, $metadata, $current );
 			}
 		}
 	}
@@ -198,6 +216,9 @@ final class BlockNavigationAdapter implements AdapterInterface {
 				'url'   => $data['url'],
 				'kind'  => $data['objectType'],
 			);
+			if ( ! empty( $data['source']['blockType'] ) ) {
+				$attrs['type'] = $data['source']['blockType'];
+			}
 			if ( $data['objectId'] ) {
 				$attrs['id'] = $data['objectId']; }
 			if ( ! empty( $data['attributes']['target'] ) ) {
